@@ -28,7 +28,8 @@ const client = new MongoClient(uri, {
       const db = client.db('LightwareDB');
       const productsCollection = db.collection('products');
       app.get('/products', async(req, res) => {
-        const result = await productsCollection.find().toArray();
+        const filter = req?.query?.id ? {_id: new ObjectId(req.query.id)} : {};
+        const result = await productsCollection.find(filter).toArray();
         res.send(result);
       })
       app.post('/products', async(req, res) => {
@@ -52,8 +53,7 @@ const client = new MongoClient(uri, {
       await client.db("admin").command({ ping: 1 });
       console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
-      // Ensures that the client will close when you finish/error
-      await client.close();
+      
     }
   }
   run().catch(console.dir);
