@@ -29,7 +29,13 @@ const client = new MongoClient(uri, {
       const productsCollection = db.collection('products');
       app.get('/products', async(req, res) => {
         const filter = req?.query?.id ? {_id: new ObjectId(req.query.id)} : {};
-        const result = await productsCollection.find(filter).toArray();
+        const limit = req?.query?.limit ? parseInt(req.query.limit) : 0;
+        const categories = req?.query?.categories ? {
+          category:  {
+              "$in": req.query.categories.split(",") 
+          }
+      } : {};
+        const result = await productsCollection.find({...filter, ...categories}).limit(limit).toArray();
         res.send(result);
       })
       app.post('/products', async(req, res) => {
@@ -48,6 +54,18 @@ const client = new MongoClient(uri, {
         const id = req.params.id;
         const result = await productsCollection.deleteOne({_id: new ObjectId(id)});
         res.send(result);
+      })
+
+      // app.get('/products-count', async(req, res) => {
+      //   const count = await productsCollection.estimatedDocumentCount();
+      //   console.log(count)
+      //   res.send(count)
+      // })
+
+      app.get('/categories', async(req, res) => {
+        const result = await productsCollection.find().project({category:true}).toArray();
+        const categories = [...new Set(result.map(obj => obj.category))];
+        res.send(categories)
       })
       // Send a ping to confirm a successful connection
       await client.db("admin").command({ ping: 1 });
